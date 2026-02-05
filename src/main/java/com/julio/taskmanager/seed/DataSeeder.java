@@ -42,22 +42,26 @@ public class DataSeeder {
 			
 			log.info("Users created");
 			
-			Task t1 = new Task(
-				"Learn Spring Boot",
-				"Start with controllers and services",
+			Task task1 = new Task(
+				"Comprar comida",
+				"Ir al supermercado",
 				TaskStatus.PENDING,
-				admin
-			);
-			
-			Task t2 = new Task(
-				"Build Task Manager",
-				"CRUD + Auth + JWT",
-				TaskStatus.IN_PROGRESS,
+				TaskCategory.PERSONAL,
+				"🛒",
 				user
 			);
 			
-			taskRepository.save(t1);
-			taskRepository.save(t2);
+			Task task2 = new Task(
+				"Estudiar Spring Boot",
+				"Repasar controladores y servicios",
+				TaskStatus.IN_PROGRESS,
+				TaskCategory.SCHOOL,
+				"📚",
+				user
+			);
+			
+			taskRepository.save(task1);
+			taskRepository.save(task2);
 			
 			log.info("Tasks created");
 			log.info("Database seed completed");
