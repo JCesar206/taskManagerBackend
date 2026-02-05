@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -30,10 +31,9 @@ public class TaskController {
 	@GetMapping("/user/{email}")
 	public ResponseEntity<List<Task>> getTasksByUser(@PathVariable String email) {
 		log.info("Fetching tasks for user: {}", email);
-		Optional<User> user = userService.findByEmail(email);
 		
-		return user
-			.map(value -> ResponseEntity.ok(taskService.getTasksByUser(value)))
+		return userService.findByEmail(email)
+			.map(user -> ResponseEntity.ok(taskService.getTasksByUser(user)))
 			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 	
@@ -44,18 +44,17 @@ public class TaskController {
 		@RequestBody Task task
 	) {
 		log.info("Creating task '{}' for user: {}", task.getTitle(), email);
-		Optional<User> user = userService.findByEmail(email);
 		
+		Optional<User> user = userService.findByEmail(email);
 		if (user.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
 		
 		task.setUser(user.get());
-		Task savedTask = taskService.saveTask(task);
-		return ResponseEntity.ok(savedTask);
+		return ResponseEntity.ok(taskService.saveTask(task));
 	}
 	
-	// Put - editar tarea
+	// PUT - editar tarea completa
 	@PutMapping("/{id}")
 	public ResponseEntity<Task> updateTask(
 		@PathVariable Long id,
@@ -63,43 +62,34 @@ public class TaskController {
 	) {
 		log.info("Updating task id: {}", id);
 		
-		Optional<Task> taskOpt = taskService.findById(id);
-		if (taskOpt.isEmpty()) {
-			return ResponseEntity.notFound().build();
-		}
-		
-		Task task = taskOpt.get();
-		task.setTitle(updatedTask.getTitle());
-		task.setDescription(updatedTask.getDescription());
-		task.setStatus(updatedTask.getStatus());
-		
-		return ResponseEntity.ok(taskService.saveTask(task));
+		return taskService.updateTask(id, updatedTask)
+			.map(ResponseEntity::ok)
+			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 	
-	// Patch - cambiar estado
-	@PatchMapping("/{id}/status")
+	// PUT - cambiar estado
+	@PutMapping("/{id}/status")
 	public ResponseEntity<Task> updateTaskStatus(
 		@PathVariable Long id,
-		@RequestParam TaskStatus status
+		@RequestBody Map<String, TaskStatus> body
 	) {
+		TaskStatus status = body.get("status");
 		log.info("Updating status of task {} to {}", id, status);
 		
-		Optional<Task> taskOpt = taskService.findById(id);
-		if (taskOpt.isEmpty()) {
-			return ResponseEntity.notFound().build();
+		if (status == null) {
+			return ResponseEntity.badRequest().build();
 		}
 		
-		Task task = taskOpt.get();
-		task.setStatus(status);
-		
-		return ResponseEntity.ok(taskService.saveTask(task));
+		return taskService.updateStatus(id, status)
+			.map(ResponseEntity::ok)
+			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 	
-	// Delete
+	// DELETE
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
 		log.info("Deleting task with id: {}", id);
 		taskService.deleteTask(id);
-		return ResponseEntity.ok().build();
+		return ResponseEntity.noContent().build();
 	}
 }
