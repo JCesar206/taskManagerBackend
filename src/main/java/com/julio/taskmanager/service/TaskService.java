@@ -21,7 +21,7 @@ public class TaskService {
 		this.taskRepository = taskRepository;
 	}
 	
-	// Create / Update (save)
+	// Create
 	public Task saveTask(Task task) {
 		log.info(
 			"Saving task: {} | status: {} | user: {}",
@@ -44,14 +44,32 @@ public class TaskService {
 		return taskRepository.findById(id);
 	}
 	
-	// Patch - cambiar estado
-	public Task updateStatus(Task task, TaskStatus status) {
-		log.info("Updating status of task {} to {}", task.getId(), status);
-		task.setStatus(status);
-		return taskRepository.save(task);
+	// UPDATE - tarea completa
+	public Optional<Task> updateTask(Long id, Task updatedTask) {
+		log.info("Updating task with id: {}", id);
+		
+		return taskRepository.findById(id).map(task -> {
+			task.setTitle(updatedTask.getTitle());
+			task.setDescription(updatedTask.getDescription());
+			task.setStatus(updatedTask.getStatus());
+			task.setCategory(updatedTask.getCategory());
+			task.setEmoji(updatedTask.getEmoji());
+			
+			return taskRepository.save(task);
+		});
 	}
 	
-	// Delete
+	// PATCH - cambiar estado
+	public Optional<Task> updateStatus(Long id, TaskStatus status) {
+		log.info("Updating status of task {} to {}", id, status);
+		
+		return taskRepository.findById(id).map(task -> {
+			task.setStatus(status);
+			return taskRepository.save(task);
+		});
+	}
+	
+	// DELETE
 	public void deleteTask(Long taskId) {
 		log.info("Deleting task with id: {}", taskId);
 		taskRepository.deleteById(taskId);
